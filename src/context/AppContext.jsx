@@ -212,8 +212,7 @@ export const AppProvider = ({ children }) => {
   }
 
   // Login — both name AND username must match the same user record
-  const login = async (name, username) => {
-    // Look up by username first (indexed, fast)
+  const login = async (username) => {
     const { data: found, error } = await supabase
       .from('registered_users')
       .select('*')
@@ -221,12 +220,7 @@ export const AppProvider = ({ children }) => {
       .maybeSingle()
 
     if (error) { dbError('login', error); return { ok: false, error: 'Something went wrong. Please try again.' } }
-
-    // No user with that username, or the full_name doesn't match the entered name
-    const nameMatches = found && found.full_name.toLowerCase() === name.trim().toLowerCase()
-    if (!found || !nameMatches) {
-      return { ok: false, error: 'Invalid name or username.' }
-    }
+    if (!found) return { ok: false, error: 'User not registered. Please sign up first.' }
 
     const userData = {
       id:          found.id,
@@ -241,7 +235,7 @@ export const AppProvider = ({ children }) => {
 
     setUser(userData)
     localStorage.setItem('testAppUser', JSON.stringify(userData))
-    return { ok: true }
+    return { ok: true, fullName: userData.fullName }
   }
 
   const logout = () => {

@@ -9,7 +9,6 @@ const Login = () => {
   const { login } = useApp()
   const navigate  = useNavigate()
 
-  const [name,     setName]     = useState('')
   const [username, setUsername] = useState('')
   const [error,    setError]    = useState('')
   const [busy,     setBusy]     = useState(false)
@@ -18,13 +17,13 @@ const Login = () => {
     e.preventDefault()
     setError('')
 
-    if (!name.trim() || !username.trim()) {
-      setError('Invalid name or username.')
+    if (!username.trim()) {
+      setError('Please enter your username.')
       return
     }
 
     setBusy(true)
-    const result = await login(name.trim(), username.trim())
+    const result = await login(username.trim())
     setBusy(false)
 
     if (!result.ok) {
@@ -32,7 +31,7 @@ const Login = () => {
       return
     }
 
-    toast.success(`Welcome back, ${name.trim()}!`)
+    toast.success(`Welcome back, ${result.fullName}!`)
   }
 
   return (
@@ -71,22 +70,6 @@ const Login = () => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={e => { setName(e.target.value); setError('') }}
-              className="input-field"
-              placeholder="Enter your full name"
-              autoComplete="name"
-              autoFocus
-            />
-          </div>
-
-          <div>
             <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
               Username
             </label>
@@ -98,6 +81,7 @@ const Login = () => {
               className="input-field"
               placeholder="Enter your username"
               autoComplete="username"
+              autoFocus
             />
           </div>
 
