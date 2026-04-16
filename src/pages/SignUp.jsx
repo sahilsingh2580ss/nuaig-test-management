@@ -162,6 +162,10 @@ const SignUp = () => {
               <option value="QA">QA</option>
               <option value="Product Manager">Product Manager</option>
               <option value="Business Analyst">Business Analyst</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Technical Program Manager">Technical Program Manager</option>
+              <option value="Director of Engineering">Director of Engineering</option>
+              <option value="CEO">CEO</option>
             </select>
             {errors.role && (
               <p className="text-xs text-red-500 mt-1 flex items-center gap-1">

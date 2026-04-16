@@ -204,6 +204,13 @@ const DefectDetails = () => {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+              <select name="priority" value={formData.priority || 'Medium'} onChange={handleChange} className="input-field">
+                <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+              </select>
+            </div>
+
             {/* ── Assigned To — all signed-in users ── */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
