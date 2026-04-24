@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Edit, Trash2, Users, FileText,
-  Plus, UserCircle, Info,
+  Plus, UserCircle, Info, Download,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import Modal from '../components/Modal'
@@ -121,6 +121,60 @@ const ProjectDetails = () => {
     setTestCaseToDelete(null)
   }
 
+  // ── CSV Export ────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    if (projectTestCases.length === 0) {
+      toast.error('No test cases to export for this project.')
+      return
+    }
+
+    // Wrap a cell value in quotes and escape any internal quotes
+    const escape = (val) => {
+      const str = (val ?? '').toString().replace(/"/g, '""')
+      return `"${str}"`
+    }
+
+    const headers = [
+      'Project Name',
+      'Test Description',
+      'Test Steps',
+      'Expected Result',
+      'Priority',
+      'Status',
+    ]
+
+    const rows = projectTestCases.map(tc => {
+      // Steps can be an array — join with " | " so each step is readable in one cell
+      const steps = Array.isArray(tc.steps)
+        ? tc.steps.join(' | ')
+        : (tc.steps ?? '')
+
+      return [
+        escape(project.name),
+        escape(tc.title || tc.description),
+        escape(steps),
+        escape(tc.expectedResult),
+        escape(tc.priority),
+        escape(tc.status),
+      ].join(',')
+    })
+
+    const csv     = [headers.join(','), ...rows].join('\n')
+    const blob    = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url     = URL.createObjectURL(blob)
+    const link    = document.createElement('a')
+    const filename = `${project.name.replace(/\s+/g, '_')}_test_cases.csv`
+
+    link.href     = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    toast.success(`Exported ${projectTestCases.length} test case(s) to ${filename}`)
+  }
+
   return (
     <div className="space-y-6">
 
@@ -152,6 +206,11 @@ const ProjectDetails = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Project Information</h2>
           <div className="flex gap-2">
+            <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+              onClick={handleExport}
+              className="btn-outline flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export
+            </motion.button>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={() => { setFormData(project); setShowEditModal(true) }}
               className="btn-primary flex items-center gap-2">
