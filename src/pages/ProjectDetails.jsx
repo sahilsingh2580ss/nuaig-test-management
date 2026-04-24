@@ -135,7 +135,6 @@ const ProjectDetails = () => {
     }
 
     const headers = [
-      'Project Name',
       'Test Description',
       'Test Steps',
       'Expected Result',
@@ -144,13 +143,11 @@ const ProjectDetails = () => {
     ]
 
     const rows = projectTestCases.map(tc => {
-      // Steps can be an array — join with " | " so each step is readable in one cell
       const steps = Array.isArray(tc.steps)
         ? tc.steps.join(' | ')
         : (tc.steps ?? '')
 
       return [
-        escape(project.name),
         escape(tc.title || tc.description),
         escape(steps),
         escape(tc.expectedResult),
