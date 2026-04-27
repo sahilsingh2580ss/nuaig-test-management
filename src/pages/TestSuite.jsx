@@ -459,6 +459,8 @@ const SuiteDetail = ({ suiteId, onBack }) => {
 }
 
 // ─── List View ────────────────────────────────────────────────────────────────
+const EMPTY_SUITE_FORM = { name: '', startDate: '', endDate: '', projectId: '' }
+
 const TestSuite = () => {
   const { testSuites, addTestSuite, projects } = useApp()
 
@@ -466,7 +468,12 @@ const TestSuite = () => {
   const [showCreate,    setShowCreate]    = useState(false)
   const [searchTerm,    setSearchTerm]    = useState('')
   const [projectFilter, setProjectFilter] = useState('All')
-  const [formData,      setFormData]      = useState({ name:'', startDate:'', endDate:'', projectId:'' })
+  const [formData,      setFormData]      = useState(EMPTY_SUITE_FORM)
+
+  const resetAndCloseCreate = () => {
+    setFormData(EMPTY_SUITE_FORM)
+    setShowCreate(false)
+  }
 
   if (activeSuiteId !== null) {
     return <SuiteDetail suiteId={activeSuiteId} onBack={() => setActiveSuiteId(null)} />
@@ -487,7 +494,7 @@ const TestSuite = () => {
     const suite = addTestSuite({ ...formData, projectId: parseInt(formData.projectId) })
     toast.success('Test suite created!')
     setShowCreate(false)
-    setFormData({ name:'', startDate:'', endDate:'', projectId:'' })
+    setFormData(EMPTY_SUITE_FORM)
     setActiveSuiteId(suite.id)
   }
 
@@ -607,7 +614,7 @@ const TestSuite = () => {
       </AnimatePresence>
 
       {/* Create Suite Modal */}
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Add Test Suite">
+      <Modal isOpen={showCreate} onClose={resetAndCloseCreate} title="Add Test Suite">
         <form onSubmit={handleCreate} className="flex flex-col max-h-[65vh]">
           <div className="overflow-y-auto pr-1 space-y-4 flex-1 scrollbar-thin">
             <div>
@@ -634,7 +641,7 @@ const TestSuite = () => {
             </div>
           </div>
           <div className="flex gap-3 pt-4 mt-4 border-t border-gray-100 bg-white flex-shrink-0">
-            <button type="button" onClick={() => setShowCreate(false)} className="btn-outline flex-1">Cancel</button>
+            <button type="button" onClick={resetAndCloseCreate} className="btn-outline flex-1">Cancel</button>
             <button type="submit" className="btn-primary flex-1">Create Suite</button>
           </div>
         </form>

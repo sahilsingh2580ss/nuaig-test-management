@@ -52,6 +52,17 @@ const SignUp = () => {
     setErrors(prev => ({ ...prev, [field]: '' }))
   }
 
+  // Prevent the year part of a date input exceeding 4 digits
+  const setDate = (e) => {
+    const val = e.target.value          // "YYYY-MM-DD"
+    if (val) {
+      const [year] = val.split('-')
+      if (year && year.length > 4) return  // block update if year > 4 digits
+    }
+    setForm(prev => ({ ...prev, dateOfBirth: val }))
+    setErrors(prev => ({ ...prev, dateOfBirth: '' }))
+  }
+
   // ── Field-level validation ─────────────────────────────────────────────
   const validate = () => {
     const errs = {}
@@ -60,7 +71,12 @@ const SignUp = () => {
     if (!form.username.trim())    errs.username    = 'Username is required.'
     else if (!USERNAME_RE.test(form.username))
                                   errs.username    = 'Username must be alphanumeric only (no spaces or symbols).'
-    if (!form.dateOfBirth)        errs.dateOfBirth = 'Date of birth is required.'
+    if (!form.dateOfBirth) {
+      errs.dateOfBirth = 'Date of birth is required.'
+    } else {
+      const year = form.dateOfBirth.split('-')[0]
+      if (!year || year.length !== 4) errs.dateOfBirth = 'Enter a valid 4-digit year (YYYY).'
+    }
     if (!form.role)               errs.role        = 'Please select a role.'
     return errs
   }
@@ -140,7 +156,7 @@ const SignUp = () => {
 
           <Field
             id="dateOfBirth" label="Date of Birth"
-            type="date" value={form.dateOfBirth} onChange={set('dateOfBirth')}
+            type="date" value={form.dateOfBirth} onChange={setDate}
             autoComplete="bday"
             error={errors.dateOfBirth}
           />

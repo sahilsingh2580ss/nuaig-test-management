@@ -15,12 +15,8 @@ const Projects = () => {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    status: 'Active',
-    assignedTo: '',
-  })
+  const emptyForm = { name: '', description: '', status: 'Active', assignedTo: '' }
+  const [formData, setFormData] = useState(emptyForm)
 
   const stats = getOverallStats()
 
@@ -28,6 +24,11 @@ const Projects = () => {
   const userOptions = registeredUsers
     .filter(u => ASSIGNABLE_ROLES.includes(u.role))
     .map(u => u.fullName)
+
+  const resetAndClose = () => {
+    setFormData(emptyForm)
+    setShowModal(false)
+  }
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -100,7 +101,7 @@ const Projects = () => {
         </div>
       )}
 
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create New Project">
+      <Modal isOpen={showModal} onClose={resetAndClose} title="Create New Project">
         <form onSubmit={handleSubmit} className="flex flex-col max-h-[65vh]">
           {/* Scrollable fields area */}
           <div className="overflow-y-auto pr-1 space-y-4 flex-1 scrollbar-thin">
@@ -150,7 +151,7 @@ const Projects = () => {
 
           {/* Sticky action buttons */}
           <div className="flex gap-3 pt-4 mt-4 border-t border-gray-100 bg-white">
-            <button type="button" onClick={() => setShowModal(false)} className="btn-outline flex-1">Cancel</button>
+            <button type="button" onClick={resetAndClose} className="btn-outline flex-1">Cancel</button>
             <button type="submit" className="btn-primary flex-1">Create Project</button>
           </div>
         </form>
