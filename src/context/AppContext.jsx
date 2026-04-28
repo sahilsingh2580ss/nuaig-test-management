@@ -116,6 +116,14 @@ export const AppProvider = ({ children }) => {
   const [defects,         setDefects]         = useState([])
   const [testSuites,      setTestSuites]      = useState([])
   const [loading,         setLoading]         = useState(false)
+  const [activityLog,     setActivityLog]     = useState([])   // unified feed
+
+  // Helper — prepend one entry, keep latest 50
+  const logActivity = (entry) =>
+    setActivityLog(prev => [
+      { ...entry, _id: `${Date.now()}-${Math.random()}`, _date: new Date().toISOString() },
+      ...prev,
+    ].slice(0, 50))
 
   // ── Restore session ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -330,6 +338,13 @@ export const AppProvider = ({ children }) => {
     if (error) { dbError('addTestCase', error); toast.error(`Failed to create test case: ${error.message}`); return null }
     const mapped = toTestCase(data)
     setTestCases(prev => [mapped, ...prev])
+    logActivity({
+      _type:       'test-case',
+      _action:     'created',
+      id:          mapped.id,
+      label:       mapped.title || mapped.description,
+      status:      mapped.status,
+    })
     return mapped
   }
 
@@ -352,7 +367,17 @@ export const AppProvider = ({ children }) => {
       .select()
       .single()
     if (error) { dbError('updateTestCase', error); toast.error(`Failed to update test case: ${error.message}`); return }
-    setTestCases(prev => prev.map(tc => tc.id === id ? toTestCase(data) : tc))
+    const prev_tc = testCases.find(tc => tc.id === id)
+    const mapped  = toTestCase(data)
+    setTestCases(prev => prev.map(tc => tc.id === id ? mapped : tc))
+    logActivity({
+      _type:       'test-case',
+      _action:     prev_tc && prev_tc.status !== mapped.status ? 'status-changed' : 'updated',
+      id:          mapped.id,
+      label:       mapped.title || mapped.description,
+      status:      mapped.status,
+      prevStatus:  prev_tc?.status,
+    })
   }
 
   const deleteTestCase = async (id) => {
@@ -390,6 +415,14 @@ export const AppProvider = ({ children }) => {
     if (error) { dbError('addDefect', error); toast.error(`Failed to report defect: ${error.message}`); return null }
     const mapped = toDefect(data)
     setDefects(prev => [mapped, ...prev])
+    logActivity({
+      _type:    'defect',
+      _action:  'reported',
+      id:       mapped.id,
+      label:    mapped.title,
+      status:   mapped.status,
+      severity: mapped.severity,
+    })
     return mapped
   }
 
@@ -417,7 +450,18 @@ export const AppProvider = ({ children }) => {
       .select()
       .single()
     if (error) { dbError('updateDefect', error); toast.error(`Failed to update defect: ${error.message}`); return }
-    setDefects(prev => prev.map(d => d.id === id ? toDefect(data) : d))
+    const prev_d = defects.find(d => d.id === id)
+    const mapped = toDefect(data)
+    setDefects(prev => prev.map(d => d.id === id ? mapped : d))
+    logActivity({
+      _type:      'defect',
+      _action:    prev_d && prev_d.status !== mapped.status ? 'status-changed' : 'updated',
+      id:         mapped.id,
+      label:      mapped.title,
+      status:     mapped.status,
+      prevStatus: prev_d?.status,
+      severity:   mapped.severity,
+    })
   }
 
   const deleteDefect = async (id) => {
@@ -548,7 +592,7 @@ export const AppProvider = ({ children }) => {
   })
 
   const value = {
-    user, registeredUsers, loading,
+    user, registeredUsers, loading, activityLog,
     projects, testCases, defects, testSuites,
     login, logout, signUp,
     addProject, updateProject, deleteProject, getProjectById,

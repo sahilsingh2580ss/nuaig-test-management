@@ -4,21 +4,15 @@ import { CheckCircle, XCircle, Clock, AlertTriangle, TrendingUp, Activity } from
 import StatCard from '../components/StatCard'
 
 const TestingOverview = () => {
-  const { testCases, defects, getOverallStats } = useApp()
+  const { testCases, defects, getOverallStats, activityLog } = useApp()
   const stats = getOverallStats()
 
-  const passRate    = stats.totalTestCases === 0 ? 0 : Math.round((stats.passedTestCases / stats.totalTestCases) * 100)
-  const failRate    = stats.totalTestCases === 0 ? 0 : Math.round((stats.failedTestCases / stats.totalTestCases) * 100)
-  const defectRate  = stats.totalTestCases === 0 ? 0 : Math.round((stats.totalDefects    / stats.totalTestCases) * 100)
+  const passRate     = stats.totalTestCases === 0 ? 0 : Math.round((stats.passedTestCases / stats.totalTestCases) * 100)
+  const failRate     = stats.totalTestCases === 0 ? 0 : Math.round((stats.failedTestCases / stats.totalTestCases) * 100)
+  const defectRate   = stats.totalTestCases === 0 ? 0 : Math.round((stats.totalDefects    / stats.totalTestCases) * 100)
   const pendingCount = stats.totalTestCases - stats.passedTestCases - stats.failedTestCases
 
-  const recentActivity = [
-    ...testCases.map(tc => ({ ...tc, _type: 'test-case', _date: tc.executedDate || tc.createdAt })),
-    ...defects.map(d  => ({ ...d,  _type: 'defect',    _date: d.reportedDate  || d.createdAt })),
-  ]
-    .sort((a, b) => new Date(b._date) - new Date(a._date))
-    .slice(0, 10)
-
+  // ── Activity feed helpers ─────────────────────────────────────────────────
   const activityIcon = (item) => {
     if (item._type === 'test-case') {
       if (item.status === 'Passed') return <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
@@ -28,18 +22,28 @@ const TestingOverview = () => {
     return <AlertTriangle className="w-5 h-5 text-danger flex-shrink-0" />
   }
 
-  const activityText = (item) =>
-    item._type === 'test-case'
-      ? `Test case "${item.title}" ${item.status?.toLowerCase()}`
-      : `Defect "${item.title}" reported (${item.severity})`
+  const activityText = (item) => {
+    // label is captured at log time — always has the real name, never empty
+    const name = item.label || '(unnamed)'
+    if (item._type === 'test-case') {
+      if (item._action === 'created')        return `"${name}" created`
+      if (item._action === 'status-changed') return `"${name}" status changed to ${item.status}`
+      return `"${name}" updated`
+    }
+    // defect
+    if (item._action === 'reported')       return `Defect "${name}" reported (${item.severity})`
+    if (item._action === 'status-changed') return `Defect "${name}" status changed from ${item.prevStatus} to ${item.status}`
+    return `Defect "${name}" updated`
+  }
 
-  const activityBadge = (item) =>
-    item._type === 'test-case'
-      ? item.status === 'Passed' ? 'badge-success' : item.status === 'Failed' ? 'badge-error' : 'badge-grey'
-      : item.severity === 'Critical' ? 'badge-error' : 'badge-warning'
+  const activityBadge = (item) => {
+    if (item._type === 'test-case')
+      return item.status === 'Passed' ? 'badge-success' : item.status === 'Failed' ? 'badge-error' : 'badge-grey'
+    return item.severity === 'Critical' ? 'badge-error' : 'badge-warning'
+  }
 
   const activityLabel = (item) =>
-    item._type === 'test-case' ? item.status : item.severity
+    item._type === 'test-case' ? item.status : (item.status || item.severity)
 
   return (
     <div className="space-y-6">
@@ -158,12 +162,12 @@ const TestingOverview = () => {
       {/* ── Recent activity ── */}
       <div className="card">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
-        {recentActivity.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No recent activity</p>
+        {activityLog.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">No recent activity — create a test case or report a defect to begin</p>
         ) : (
           <div className="space-y-2">
-            {recentActivity.map((item, i) => (
-              <motion.div key={`${item._type}-${item.id}`}
+            {activityLog.map((item, i) => (
+              <motion.div key={item._id}
                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
